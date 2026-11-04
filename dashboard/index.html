@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sessioni attive</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--fg:#1d1d1b;--muted:#6b6a65;--line:#e3e1db;
+--ok:#2f7d4f;--work:#1f63b5;--warn:#b0701a;--idle:#8a8984;--bad:#b23b3b}
+@media (prefers-color-scheme:dark){:root{--bg:#1a1a19;--card:#242422;--fg:#ecebe6;--muted:#a09f99;--line:#363532;
+--ok:#5fbf86;--work:#6aa5ef;--warn:#e0a54d;--idle:#8f8e88;--bad:#e27474}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,Segoe UI,sans-serif}
+main{max-width:1200px;margin:0 auto;padding:20px 16px}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:13px}
+.barra{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:16px 0}
+.fonti{display:flex;flex-wrap:wrap;gap:8px}
+.fonte{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;max-width:380px}
+.fonte b{font-size:13px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+.chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;color:#fff;white-space:nowrap}
+.s-attiva{background:var(--ok)}.s-in-lavoro{background:var(--work)}.s-bloccata,.s-interrotta{background:var(--warn)}
+.s-ferma,.s-completata,.s-archiviata,.s-sconosciuto{background:var(--idle)}.s-fallita,.s-offline{background:var(--bad)}
+.msg{color:var(--muted);font-size:12px;max-width:420px}
+.cart{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--muted);word-break:break-all}
+.manuali{margin-top:16px;font-size:12px;color:var(--muted)}
+@media (max-width:760px){thead{display:none}tr{display:block;border-bottom:1px solid var(--line)}td{display:block;border:0;padding:4px 10px}}
+</style>
+</head>
+<body>
+<main>
+<h1>Sessioni attive</h1>
+<div class="sub" id="gen">caricamento…</div>
+<div class="barra">
+  <label><input type="checkbox" id="interne"> mostra revisioni guardian di Codex</label>
+  <label><input type="checkbox" id="ferme" checked> mostra sessioni ferme</label>
+  <select id="macchina"><option value="">tutte le macchine</option></select>
+  <button id="agg">Aggiorna</button>
+</div>
+<div class="fonti" id="fonti"></div>
+<div style="margin-top:16px"><table>
+<thead><tr><th>Stato</th><th>Strumento</th><th>Sessione</th><th>Ultima attività</th><th>Ultimo messaggio</th></tr></thead>
+<tbody id="righe"></tbody></table></div>
+<div class="manuali" id="manuali"></div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const quando=iso=>{if(!iso)return"—";const m=(Date.now()-new Date(iso))/60000;
+  if(m<1)return"ora";if(m<60)return Math.round(m)+" min fa";if(m<1440)return Math.round(m/60)+" h fa";
+  return new Date(iso).toLocaleString("it-IT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})};
+let dati=null;
+function disegna(){
+  if(!dati)return;
+  const interne=$("interne").checked, ferme=$("ferme").checked;
+  const passivi=["ferma","completata","archiviata","sconosciuto","offline"];
+  const sel=$("macchina"), scelta=sel.value;
+  const macchine=[...new Set(dati.sessioni.map(s=>s.macchina).filter(Boolean))].sort();
+  sel.innerHTML=`<option value="">tutte le macchine</option>`+macchine.map(m=>`<option${m===scelta?" selected":""}>${esc(m)}</option>`).join("");
+  const vis=dati.sessioni.filter(s=>(interne||!s.interna)&&(ferme||!passivi.includes(s.stato))&&(!scelta||s.macchina===scelta));
+  $("righe").innerHTML=vis.map(s=>`<tr>
+    <td><span class="chip s-${esc(s.stato).replace(/[ ?]+/g,"-").replace(/-$/,"")}">${esc(s.stato)}</span></td>
+    <td><b>${esc(s.strumento)}</b>${s.macchina?` <span class="cart">@${esc(s.macchina)}</span>`:""}<div class="msg">${esc(s.tipo)}${s.modello?" · "+esc(s.modello):""}</div></td>
+    <td>${esc(s.titolo)}<div class="cart">${esc(s.cartella)}</div></td>
+    <td>${quando(s.ultima_attivita)}</td>
+    <td class="msg">${esc(s.ultimo_messaggio)}</td></tr>`).join("")||`<tr><td colspan="5">Nessuna sessione con questi filtri.</td></tr>`;
+  $("fonti").innerHTML=Object.entries(dati.fonti).map(([n,f])=>`<div class="fonte"><b>${esc(n)}</b> · ${f.n}<br>${esc(f.nota)}</div>`).join("");
+  $("manuali").innerHTML=dati.manuali.map(m=>`<div><b>${esc(m.strumento)}</b>: ${esc(m.nota)}</div>`).join("");
+  $("gen").textContent=`Aggiornato ${new Date(dati.generato).toLocaleTimeString("it-IT")} · ${vis.length} di ${dati.sessioni.length} sessioni · si aggiorna ogni 30 s`;
+}
+async function carica(){
+  try{dati=await (await fetch("/api/sessioni")).json();disegna()}
+  catch(e){$("gen").textContent="Errore nel caricamento: "+e}
+}
+$("interne").onchange=disegna;$("ferme").onchange=disegna;$("macchina").onchange=disegna;$("agg").onclick=carica;
+carica();setInterval(carica,30000);
+</script>
+</body>
+</html>
