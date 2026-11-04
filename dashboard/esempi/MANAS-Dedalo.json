@@ -1,0 +1,7 @@
+{
+ "macchina": "MANAS",
+ "generata": "2026-11-04T09:00:00Z",
+ "sessioni": [
+  {"strumento": "Claude Code", "tipo": "locale", "titolo": "COPIA DI CONFLITTO: non deve comparire", "modello": "", "stato": "attiva", "ultima_attivita": "2026-11-04T08:59:00Z", "id": "demo-conflitto-0001"}
+ ]
+}

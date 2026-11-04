@@ -1,0 +1,10 @@
+{
+ "macchina": "DEDALO",
+ "generata": "2026-11-04T11:20:00Z",
+ "sessioni": [
+  {"strumento": "Claude Code", "tipo": "locale", "titolo": "Indice archivio progetti", "modello": "", "stato": "attiva", "ultima_attivita": "2026-11-04T11:19:00Z", "id": "demo-dedalo-0001"},
+  {"strumento": "Codex", "tipo": "codex_cli_rs", "titolo": "Migrazione elenco fornitori di prova", "modello": "gpt-5-codex", "stato": "in lavoro", "ultima_attivita": "2026-11-04T11:18:00Z", "id": "demo-dedalo-0002"},
+  {"strumento": "Claude Code", "tipo": "locale", "titolo": "Note sopralluogo fittizio", "modello": "", "stato": "ferma", "ultima_attivita": "2026-11-04T09:40:00Z", "id": "demo-dedalo-0003"},
+  {"strumento": "Codex", "tipo": "codex_cli_rs", "titolo": "Prova vecchio script backup", "modello": "gpt-5-codex", "stato": "archiviata", "ultima_attivita": "2026-10-25T12:00:00Z", "id": "demo-dedalo-0004"}
+ ]
+}

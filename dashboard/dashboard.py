@@ -2,6 +2,7 @@
 
 Avvio:  python dashboard.py        poi apri http://127.0.0.1:8765
 Esporta per le altre macchine:  python dashboard.py --esporta [--ogni 60]
+Prova con dati finti:  python dashboard.py --demo   (legge solo esempi/, non tocca ~/.codex né ~/.claude)
 Legge solo file locali; non legge credenziali (auth.json, token). Scrive solo con --esporta.
 Fonti:
   - Codex: ~/.codex/state_5.sqlite (tabella threads) + coda dei file rollout
@@ -29,6 +30,10 @@ CONDIVISA = Path(os.environ.get("DASHBOARD_CONDIVISA") or QUI / "dati")
 VECCHIA_SE_MINUTI = 5  # un'esportazione più vecchia di così viene segnalata
 # nell'esportazione restano solo questi campi: niente messaggi né cartelle nella cartella condivisa
 CAMPI_ESPORTATI = ("strumento", "tipo", "titolo", "modello", "stato", "ultima_attivita", "id")
+# modalità dimostrativa (--demo): tutte le fonti vengono da esempi/, con orari spostati su adesso
+ESEMPI = QUI / "esempi"
+DEMO = False
+DEMO_RIFERIMENTO = datetime(2026, 11, 4, 12, 0, tzinfo=timezone.utc)  # "adesso" negli orari degli esempi
 
 
 def ora_iso(ts):
@@ -39,6 +44,37 @@ def stato_da_eta(ts):
     if not ts:
         return "sconosciuto"
     return "attiva" if time.time() - ts < ATTIVA_SE_MINUTI * 60 else "ferma"
+
+
+def sposta_demo(dati):
+    """In --demo gli orari degli esempi sono scritti rispetto a DEMO_RIFERIMENTO: li sposta su adesso."""
+    delta = datetime.now(timezone.utc) - DEMO_RIFERIMENTO
+
+    def sposta(v):
+        try:
+            return (datetime.fromisoformat(v) + delta).isoformat()
+        except (TypeError, ValueError):
+            return v
+    if "generata" in dati:
+        dati["generata"] = sposta(dati["generata"])
+    for s in dati.get("sessioni", []):
+        s["ultima_attivita"] = sposta(s.get("ultima_attivita"))
+    return dati
+
+
+def leggi_json(p):
+    dati = json.loads(p.read_text(encoding="utf-8"))
+    return sposta_demo(dati) if DEMO else dati
+
+
+def eta_minuti(p, dati):
+    """Età di un file in minuti: dall'orario del file; in --demo dal campo "generata" (il file è appena scaricato)."""
+    if DEMO:
+        try:
+            return (datetime.now(timezone.utc) - datetime.fromisoformat(dati["generata"])).total_seconds() / 60
+        except (KeyError, TypeError, ValueError):
+            pass
+    return (time.time() - p.stat().st_mtime) / 60
 
 
 def coda_file(percorso, byte=64_000):
@@ -171,16 +207,19 @@ def claude_locale():
 
 def claude_remoto():
     # si usa la più recente tra la copia accanto allo script e quella nella cartella condivisa
-    candidati = [QUI / "claude_remoto.json"] + ([CONDIVISA / "claude_remoto.json"] if CONDIVISA else [])
+    if DEMO:
+        candidati = [ESEMPI / "claude_remoto.json"]
+    else:
+        candidati = [QUI / "claude_remoto.json"] + ([CONDIVISA / "claude_remoto.json"] if CONDIVISA else [])
     esistenti = [p for p in candidati if p.exists()]
     if not esistenti:
         return [], "istantanea assente: chiedi a Claude di rigenerare claude_remoto.json"
     p = max(esistenti, key=lambda x: x.stat().st_mtime)
     try:
-        dati = json.loads(p.read_text(encoding="utf-8"))
+        dati = leggi_json(p)
     except ValueError as e:
         return [], f"istantanea illeggibile: {e}"
-    eta = (time.time() - p.stat().st_mtime) / 60
+    eta = eta_minuti(p, dati)
     return dati.get("sessioni", []), f"istantanea di {eta:.0f} minuti fa ({dati.get('generata', '?')})"
 
 
@@ -199,7 +238,7 @@ def altre_macchine():
         if p.name == "claude_remoto.json" or p.stem.upper() == MACCHINA:
             continue
         try:
-            dati = json.loads(p.read_text(encoding="utf-8"))
+            dati = leggi_json(p)
         except (OSError, ValueError) as e:
             note.append(f"{p.stem}: illeggibile ({e})")
             continue
@@ -209,7 +248,7 @@ def altre_macchine():
         if chi != p.stem.upper():
             note.append(f"{p.name}: ignorato, contiene dati di {chi or '?'} (copia di conflitto della sincronizzazione?)")
             continue
-        eta = (time.time() - p.stat().st_mtime) / 60
+        eta = eta_minuti(p, dati)
         vecchia = eta > VECCHIA_SE_MINUTI
         for s in dati.get("sessioni", []):
             s = dict(s, macchina=chi, interna=False, ultimo_messaggio="", cartella="")
@@ -220,10 +259,17 @@ def altre_macchine():
     return sessioni, "; ".join(note) or "nessuna altra macchina"
 
 
+def demo_locale():
+    """Sessioni finte della "macchina locale" in --demo (al posto di Codex e Claude locale)."""
+    p = ESEMPI / "locale" / "sessioni.json"
+    return leggi_json(p).get("sessioni", []), f"dati finti da {p.relative_to(QUI).as_posix()}"
+
+
 def raccogli_locali():
     """Fonti di questa macchina, ognuna isolata: una fonte rotta non ferma le altre."""
     fonti, tutte = {}, []
-    for nome, fn in (("Codex", codex), ("Claude locale", claude_locale)):
+    locali = (("Esempi locali", demo_locale),) if DEMO else (("Codex", codex), ("Claude locale", claude_locale))
+    for nome, fn in locali:
         try:
             s, nota = fn()
         except Exception as e:
@@ -262,8 +308,8 @@ def raccogli():
         fonti[nome] = {"n": len(s), "nota": nota}
         tutte.extend(s)
     # una sessione locale collegata in remote control compare anche nell'istantanea remota: si tiene quella remota
-    remoti = {s["titolo"] for s in tutte if s["strumento"] == "Claude (remoto)"}
-    tutte = [s for s in tutte if not (s["strumento"] == "Claude Code" and s["titolo"] in remoti)]
+    remoti = {s.get("titolo") for s in tutte if s.get("strumento") == "Claude (remoto)"}
+    tutte = [s for s in tutte if not (s.get("strumento") == "Claude Code" and s.get("titolo") in remoti)]
     tutte.sort(key=lambda s: s.get("ultima_attivita") or "", reverse=True)
     return {"generato": ora_iso(time.time()), "fonti": fonti, "manuali": MANUALI, "sessioni": tutte}
 
@@ -291,7 +337,13 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Dashboard sessioni Claude e Codex")
     ap.add_argument("--esporta", action="store_true", help="scrive l elenco sessioni nella cartella condivisa")
     ap.add_argument("--ogni", type=int, default=0, help="con --esporta: ripete ogni N secondi (0 = una volta)")
+    ap.add_argument("--demo", action="store_true", help="dati finti da esempi/: non legge ~/.codex né ~/.claude")
     a = ap.parse_args()
+    if a.demo:
+        if a.esporta:
+            raise SystemExit("--demo non esporta: i dati finti non vanno nella cartella condivisa")
+        DEMO, CONDIVISA, MACCHINA = True, ESEMPI, "DEMO"
+        print(f"Modalità dimostrativa: solo dati finti da {ESEMPI}")
     if a.esporta:
         while True:
             try:

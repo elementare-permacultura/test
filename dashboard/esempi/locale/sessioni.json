@@ -1,0 +1,12 @@
+{
+ "nota": "Dati finti per --demo: sessioni della macchina locale DEMO, con tutti i campi. Orari rispetto a 2026-11-04T12:00:00Z.",
+ "sessioni": [
+  {"strumento": "Codex", "tipo": "codex_cli_rs", "titolo": "Rifattorizzare il parser dei preventivi", "modello": "gpt-5-codex", "stato": "in lavoro", "ultima_attivita": "2026-11-04T11:59:10Z", "id": "demo-codex-0001", "interna": false, "ultimo_messaggio": "Sto aggiornando i test del parser", "cartella": "C:\\PROGETTI\\esempio-preventivi"},
+  {"strumento": "Codex", "tipo": "revisione guardian", "titolo": "Guardian review", "modello": "gpt-5-codex", "stato": "completata", "ultima_attivita": "2026-11-04T11:57:00Z", "id": "demo-codex-0002", "interna": true, "ultimo_messaggio": "Nessun problema rilevato nel comando proposto", "cartella": "C:\\PROGETTI\\esempio-preventivi"},
+  {"strumento": "Codex", "tipo": "vscode", "titolo": "Script di conversione delle mappe", "modello": "gpt-5-codex", "stato": "interrotta?", "ultima_attivita": "2026-11-04T10:15:00Z", "id": "demo-codex-0003", "interna": false, "ultimo_messaggio": "", "cartella": "C:\\PROGETTI\\esempio-mappe"},
+  {"strumento": "Codex", "tipo": "codex_cli_rs", "titolo": "Vecchia prova di esportazione CSV", "modello": "gpt-5-codex", "stato": "archiviata", "ultima_attivita": "2026-10-28T09:00:00Z", "id": "demo-codex-0004", "interna": false, "ultimo_messaggio": "Esportazione completata", "cartella": "C:\\PROGETTI\\esempio-csv"},
+  {"strumento": "Claude Code", "tipo": "locale", "titolo": "Impaginazione schede vivaio", "modello": "", "stato": "attiva", "ultima_attivita": "2026-11-04T11:59:40Z", "id": "demo-claude-0001", "interna": false, "ultimo_messaggio": "aggiungi la legenda in fondo alla scheda", "cartella": "C:\\PROGETTI\\esempio-vivaio"},
+  {"strumento": "Claude Code", "tipo": "locale", "titolo": "Pulizia cartella fotografie", "modello": "", "stato": "ferma", "ultima_attivita": "2026-11-04T08:30:00Z", "id": "demo-claude-0002", "interna": false, "ultimo_messaggio": "rinomina i file per data", "cartella": "C:\\PROGETTI\\esempio-foto"},
+  {"strumento": "Claude Code", "tipo": "locale + remote control", "titolo": "Bozza relazione orto didattico", "modello": "", "stato": "attiva", "ultima_attivita": "2026-11-04T11:58:00Z", "id": "demo-claude-0003", "interna": false, "ultimo_messaggio": "doppione: deve sparire, resta la versione remota", "cartella": "C:\\PROGETTI\\esempio-orto"}
+ ]
+}

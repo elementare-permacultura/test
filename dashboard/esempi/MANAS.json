@@ -1,0 +1,10 @@
+{
+ "macchina": "MANAS",
+ "generata": "2026-11-04T11:59:30Z",
+ "sessioni": [
+  {"strumento": "Claude Code", "tipo": "locale", "titolo": "Tavola planimetria lotto di prova", "modello": "", "stato": "attiva", "ultima_attivita": "2026-11-04T11:59:00Z", "id": "demo-manas-0001"},
+  {"strumento": "Codex", "tipo": "codex_cli_rs", "titolo": "Controllo formule foglio costi", "modello": "gpt-5-codex", "stato": "in lavoro", "ultima_attivita": "2026-11-04T11:58:20Z", "id": "demo-manas-0002"},
+  {"strumento": "Claude Code", "tipo": "locale", "titolo": "Glossario specie arboree", "modello": "", "stato": "ferma", "ultima_attivita": "2026-11-04T10:05:00Z", "id": "demo-manas-0003"},
+  {"strumento": "Codex", "tipo": "vscode", "titolo": "Unione file di misure", "modello": "gpt-5-codex", "stato": "completata", "ultima_attivita": "2026-11-03T17:30:00Z", "id": "demo-manas-0004"}
+ ]
+}

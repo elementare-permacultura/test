@@ -1,0 +1,11 @@
+{
+ "generata": "2026-11-04T11:50:00Z",
+ "sessioni": [
+  {"strumento": "Claude (remoto)", "tipo": "desktop · remote control", "titolo": "Bozza relazione orto didattico", "cartella": "C:\\PROGETTI\\esempio-orto", "modello": "claude-opus-5-5", "stato": "in lavoro", "ultima_attivita": "2026-11-04T11:58:30Z", "ultimo_messaggio": "contesto 120k/1M", "id": "session_demo_r001", "interna": false},
+  {"strumento": "Claude (remoto)", "tipo": "CLI · remote control", "titolo": "Analisi consumi idrici", "cartella": "", "modello": "claude-sonnet-5-5", "stato": "bloccata", "ultima_attivita": "2026-11-04T11:40:00Z", "ultimo_messaggio": "Attende risposta: procedo con il calcolo?", "id": "session_demo_r002", "interna": false},
+  {"strumento": "Claude (remoto)", "tipo": "cloud", "titolo": "Revisione testi sito di prova", "cartella": "repo esempio/sito-prova", "modello": "claude-sonnet-5-5", "stato": "completata", "ultima_attivita": "2026-11-04T09:12:00Z", "ultimo_messaggio": "Pull request aperta, in attesa di revisione", "id": "session_demo_r003", "interna": false},
+  {"strumento": "Claude (remoto)", "tipo": "cloud", "titolo": "Generazione miniature catalogo", "cartella": "repo esempio/catalogo", "modello": "claude-haiku-5-5", "stato": "fallita", "ultima_attivita": "2026-11-04T07:45:00Z", "ultimo_messaggio": "Ultimo turno terminato con errore", "id": "session_demo_r004", "interna": false},
+  {"strumento": "Claude (remoto)", "tipo": "cloud", "titolo": "Traduzione schede corso", "cartella": "repo esempio/corso", "modello": "claude-sonnet-5-5", "stato": "interrotta", "ultima_attivita": "2026-11-04T11:05:00Z", "ultimo_messaggio": "Turno interrotto dall'utente", "id": "session_demo_r006", "interna": false},
+  {"strumento": "Claude (remoto)", "tipo": "CLI · remote control", "titolo": "Calendario semine", "cartella": "", "modello": "claude-sonnet-5-5", "stato": "offline", "ultima_attivita": "2026-10-30T18:00:00Z", "ultimo_messaggio": "Computer non raggiungibile dal 30/10", "id": "session_demo_r005", "interna": false}
+ ]
+}

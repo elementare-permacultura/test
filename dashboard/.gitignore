@@ -1,0 +1,7 @@
+# I dati veri non vanno mai nel repository.
+# Cartella condivisa predefinita con le esportazioni <MACCHINA>.json
+dati/
+# Istantanea delle sessioni remote, solo alla radice di dashboard/ (esempi/claude_remoto.json resta)
+/claude_remoto.json
+# File temporanei di --esporta
+*.tmp
