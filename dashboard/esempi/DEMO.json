@@ -1,0 +1,7 @@
+{
+ "macchina": "DEMO",
+ "generata": "2026-11-04T11:59:00Z",
+ "sessioni": [
+  {"strumento": "Codex", "tipo": "codex_cli_rs", "titolo": "PROPRIO FILE: non deve comparire", "modello": "gpt-5-codex", "stato": "attiva", "ultima_attivita": "2026-11-04T11:58:00Z", "id": "demo-proprio-0001"}
+ ]
+}
