@@ -2,9 +2,119 @@
  "macchina": "DEDALO",
  "generata": "2026-11-04T11:20:00Z",
  "sessioni": [
-  {"strumento": "Claude Code", "tipo": "locale", "titolo": "Indice archivio progetti", "modello": "", "stato": "attiva", "ultima_attivita": "2026-11-04T11:19:00Z", "id": "demo-dedalo-0001"},
-  {"strumento": "Codex", "tipo": "codex_cli_rs", "titolo": "Migrazione elenco fornitori di prova", "modello": "gpt-5-codex", "stato": "in lavoro", "ultima_attivita": "2026-11-04T11:18:00Z", "id": "demo-dedalo-0002"},
-  {"strumento": "Claude Code", "tipo": "locale", "titolo": "Note sopralluogo fittizio", "modello": "", "stato": "ferma", "ultima_attivita": "2026-11-04T09:40:00Z", "id": "demo-dedalo-0003"},
-  {"strumento": "Codex", "tipo": "codex_cli_rs", "titolo": "Prova vecchio script backup", "modello": "gpt-5-codex", "stato": "archiviata", "ultima_attivita": "2026-10-25T12:00:00Z", "id": "demo-dedalo-0004"}
+  {
+   "strumento": "Claude Code",
+   "tipo": "locale",
+   "titolo": "Indice archivio progetti",
+   "modello": "",
+   "stato": "attiva",
+   "ultima_attivita": "2026-11-04T11:19:00Z",
+   "id": "demo-dedalo-0001",
+   "inizio": "2026-11-04T10:19:00Z",
+   "genitore": null,
+   "riferimenti": [],
+   "cartella_chiave": "8fcca9f99c28",
+   "progetto": "esempio-archivio"
+  },
+  {
+   "strumento": "Codex",
+   "tipo": "codex_cli_rs",
+   "titolo": "Migrazione elenco fornitori di prova",
+   "modello": "gpt-5-codex",
+   "stato": "in lavoro",
+   "ultima_attivita": "2026-11-04T11:18:00Z",
+   "id": "demo-dedalo-0002",
+   "inizio": "2026-11-04T10:48:00Z",
+   "genitore": null,
+   "riferimenti": [],
+   "cartella_chiave": "b81e765e71c9",
+   "progetto": "esempio-fornitori"
+  },
+  {
+   "strumento": "Claude Code",
+   "tipo": "locale",
+   "titolo": "Note sopralluogo fittizio",
+   "modello": "",
+   "stato": "ferma",
+   "ultima_attivita": "2026-11-04T09:40:00Z",
+   "id": "demo-dedalo-0003",
+   "inizio": "2026-11-04T08:50:00Z",
+   "genitore": null,
+   "riferimenti": [],
+   "cartella_chiave": "392e7a326f71",
+   "progetto": "esempio-sopralluogo"
+  },
+  {
+   "strumento": "Codex",
+   "tipo": "codex_cli_rs",
+   "titolo": "Prova vecchio script backup",
+   "modello": "gpt-5-codex",
+   "stato": "archiviata",
+   "ultima_attivita": "2026-10-25T17:00:00Z",
+   "id": "demo-dedalo-0004",
+   "inizio": "2026-10-25T16:45:00Z",
+   "genitore": null,
+   "riferimenti": [],
+   "cartella_chiave": "d898d19b49bb",
+   "progetto": "esempio-backup"
+  },
+  {
+   "strumento": "Claude Code",
+   "tipo": "locale",
+   "titolo": "Sito di prova: immagini mancanti",
+   "modello": "",
+   "stato": "ferma",
+   "ultima_attivita": "2026-11-04T08:40:00Z",
+   "id": "demo-dedalo-0005",
+   "inizio": "2026-11-04T08:10:00Z",
+   "genitore": null,
+   "riferimenti": [
+    "pr:esempio/sito-prova#12"
+   ],
+   "cartella_chiave": "1e0babb43677",
+   "progetto": "esempio/sito-prova"
+  },
+  {
+   "strumento": "Claude Code",
+   "tipo": "locale",
+   "titolo": "Archivio progetti: schema cartelle",
+   "modello": "",
+   "stato": "ferma",
+   "ultima_attivita": "2026-11-04T07:00:00Z",
+   "id": "demo-dedalo-0006",
+   "inizio": "2026-11-04T06:20:00Z",
+   "genitore": null,
+   "riferimenti": [],
+   "cartella_chiave": "8fcca9f99c28",
+   "progetto": "esempio-archivio"
+  },
+  {
+   "strumento": "Codex",
+   "tipo": "codex_cli_rs",
+   "titolo": "Fornitori: pulizia duplicati",
+   "modello": "gpt-5-codex",
+   "stato": "ferma",
+   "ultima_attivita": "2026-11-04T10:30:00Z",
+   "id": "demo-dedalo-0007",
+   "inizio": "2026-11-04T10:05:00Z",
+   "genitore": "demo-dedalo-0002",
+   "riferimenti": [],
+   "cartella_chiave": "b81e765e71c9",
+   "progetto": "esempio-fornitori"
+  },
+  {
+   "strumento": "Claude Code",
+   "tipo": "locale",
+   "titolo": "Mappe: legenda simboli per stampa",
+   "modello": "",
+   "stato": "completata",
+   "ultima_attivita": "2026-11-04T03:40:00Z",
+   "id": "demo-dedalo-0008",
+   "inizio": "2026-11-04T03:10:00Z",
+   "genitore": null,
+   "riferimenti": [],
+   "cartella_chiave": "633ae713f095",
+   "progetto": "esempio-mappe"
+  }
  ]
 }

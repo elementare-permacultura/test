@@ -1,0 +1,50 @@
+{
+ "macchina": "DEDALO",
+ "operazioni": [
+  {
+   "ts": "2026-11-03T11:00:00+00:00",
+   "n": 1,
+   "op": "rinomina_gruppo",
+   "id": "g-clienti",
+   "nome": "Clienti 2026"
+  },
+  {
+   "ts": "2026-11-03T11:00:00+00:00",
+   "n": 2,
+   "op": "crea_gruppo",
+   "id": "g-sito",
+   "nome": "Sito di prova",
+   "genitore": "g-clienti"
+  },
+  {
+   "ts": "2026-11-03T11:01:00+00:00",
+   "n": 3,
+   "op": "crea_regola",
+   "id": "r-sito",
+   "campo": "progetto",
+   "contiene": "sito-prova",
+   "gruppo": "g-sito"
+  },
+  {
+   "ts": "2026-11-03T11:02:00+00:00",
+   "n": 4,
+   "op": "rifiuta",
+   "arco": "simile:demo-claude-0005>demo-dedalo-0008"
+  },
+  {
+   "ts": "2026-11-03T11:03:00+00:00",
+   "n": 5,
+   "op": "aggiungi",
+   "sessione": "demo-dedalo-0001",
+   "gruppo": "g-interno"
+  },
+  {
+   "ts": "2026-11-03T08:00:00+00:00",
+   "n": 6,
+   "op": "imposta",
+   "sessione": "demo-claude-0001",
+   "campo": "nota",
+   "valore": "nota più vecchia: deve perdere contro quella di manas"
+  }
+ ]
+}

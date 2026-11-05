@@ -1,0 +1,128 @@
+{
+ "macchina": "MANAS",
+ "operazioni": [
+  {
+   "ts": "2026-11-03T09:00:00+00:00",
+   "n": 1,
+   "op": "crea_gruppo",
+   "id": "g-clienti",
+   "nome": "Clienti"
+  },
+  {
+   "ts": "2026-11-03T09:00:00+00:00",
+   "n": 2,
+   "op": "crea_gruppo",
+   "id": "g-vivaio",
+   "nome": "Vivaio",
+   "genitore": "g-clienti"
+  },
+  {
+   "ts": "2026-11-03T09:00:00+00:00",
+   "n": 3,
+   "op": "crea_gruppo",
+   "id": "g-schede",
+   "nome": "Schede",
+   "genitore": "g-vivaio"
+  },
+  {
+   "ts": "2026-11-03T09:00:00+00:00",
+   "n": 4,
+   "op": "crea_gruppo",
+   "id": "g-interno",
+   "nome": "Interno"
+  },
+  {
+   "ts": "2026-11-03T09:01:00+00:00",
+   "n": 5,
+   "op": "aggiungi",
+   "sessione": "demo-claude-0001",
+   "gruppo": "g-schede"
+  },
+  {
+   "ts": "2026-11-03T09:01:00+00:00",
+   "n": 6,
+   "op": "aggiungi",
+   "sessione": "demo-manas-0005",
+   "gruppo": "g-schede"
+  },
+  {
+   "ts": "2026-11-03T09:01:00+00:00",
+   "n": 7,
+   "op": "aggiungi",
+   "sessione": "demo-manas-0003",
+   "gruppo": "g-vivaio"
+  },
+  {
+   "ts": "2026-11-03T09:01:00+00:00",
+   "n": 8,
+   "op": "aggiungi",
+   "sessione": "session_demo_r002",
+   "gruppo": "g-clienti"
+  },
+  {
+   "ts": "2026-11-03T09:01:00+00:00",
+   "n": 9,
+   "op": "aggiungi",
+   "sessione": "demo-claude-0002",
+   "gruppo": "g-interno"
+  },
+  {
+   "ts": "2026-11-03T09:02:00+00:00",
+   "n": 10,
+   "op": "collega",
+   "da": "demo-manas-0003",
+   "a": "demo-claude-0001",
+   "tipo": "dipende_da"
+  },
+  {
+   "ts": "2026-11-03T09:03:00+00:00",
+   "n": 11,
+   "op": "imposta",
+   "sessione": "demo-claude-0001",
+   "campo": "nota",
+   "valore": "Usare la palette verde approvata"
+  },
+  {
+   "ts": "2026-11-03T09:03:00+00:00",
+   "n": 12,
+   "op": "imposta",
+   "sessione": "demo-claude-0001",
+   "campo": "prossima_azione",
+   "valore": "Stampare una scheda di prova"
+  },
+  {
+   "ts": "2026-11-03T09:03:00+00:00",
+   "n": 13,
+   "op": "imposta",
+   "sessione": "demo-claude-0001",
+   "campo": "etichette",
+   "valore": [
+    "stampa",
+    "urgente"
+   ]
+  },
+  {
+   "ts": "2026-11-03T09:03:00+00:00",
+   "n": 14,
+   "op": "imposta",
+   "sessione": "demo-claude-0001",
+   "campo": "priorita",
+   "valore": "alta"
+  },
+  {
+   "ts": "2026-11-03T10:00:00+00:00",
+   "n": 15,
+   "op": "rinomina_gruppo",
+   "id": "g-clienti",
+   "nome": "Clienti 2026 (manas)"
+  },
+  {
+   "ts": "2026-11-03T10:05:00+00:00",
+   "n": 16,
+   "op": "imposta",
+   "sessione": "session_demo_r002",
+   "campo": "colonna",
+   "valore": "in attesa"
+  }
+ ]
+}
