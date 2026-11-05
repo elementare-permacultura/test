@@ -143,14 +143,23 @@ Così un sito web aperto nel browser non può scrivere nella dashboard.
 `.gitignore` esclude `dati/`, `claude_remoto.json` e `organizza-*.json` alla radice di `dashboard/`, oltre a `demo-scritture/`, `*.tmp` e le schermate delle prove.
 Non aggiungere al repository esportazioni, istantanee o registri reali: contengono titoli e id delle sessioni.
 
-## Ipotesi da verificare con `sonda.py` su manas
+## Formati verificati con `sonda.py` (2026-11-05, una macchina)
 
-Il codice le usa solo se i dati ci sono; altrimenti restituisce vuoto.
-- Subagenti di Claude in `~/.claude/projects/<progetto>/<sessione>/subagents/*.jsonl`: il genitore è la sessione della cartella.
-- Campo `timestamp` nelle prime righe dei `.jsonl` di Claude, usato come inizio della sessione.
-- Colonne facoltative di `threads` in Codex: `parent_thread_id`, `parent_id` o `forked_from_id` per il genitore; `created_at_ms` o `created_at` per l'inizio.
-- Il legame tra una revisione guardian e il proprio thread Codex non è noto. Oggi passa solo da "stessa cartella".
-- Il campo genitore nelle sessioni remote (`list_sessions`) non è noto. Oggi lo leggiamo solo se presente in `claude_remoto.json`.
+Verificato: la sonda stampa solo nomi di campi e conteggi.
+- **Claude:**
+  - i subagenti stanno in `~/.claude/projects/<progetto>/<sessione>/subagents/*.jsonl`; il genitore è la sessione della cartella;
+  - le righe hanno `timestamp`, `cwd`, `gitBranch`, `sessionId`, `isSidechain` e `agentId`.
+- **Codex:**
+  - in `threads` non c'è `parent_thread_id`;
+  - i legami madre-figlia stanno nella tabella `thread_spawn_edges(parent_thread_id, child_thread_id, status)` e nella colonna `threads.attached_thread_parent_id`: la dashboard usa entrambi;
+  - l'inizio viene da `created_at_ms`;
+  - i valori di `thread_source` sono user, subagent, guardian_review, agent_created_thread, chatgpt_handoff, voice_chat e avatar_quick_chat.
+- **Revisioni guardian:** sono la maggior parte dei thread (380 su 520). Per questo hanno un limite a parte (`MAX_GUARDIAN` = 20) e non escludono i thread veri (`MAX_THREAD` = 80).
+
+Ancora da verificare con la sonda versione 2:
+- il nome del campo del titolo automatico nelle righe `ai-title` di Claude (oggi si provano `aiTitle` e `title`);
+- se `guardian_review_feedback.thread_id` collega una revisione guardian al thread revisionato;
+- quanti thread usano `thread_section_id`, `project_id`, `git_origin_url` e `git_branch`.
 
 ## Limiti noti
 

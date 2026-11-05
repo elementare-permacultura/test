@@ -48,6 +48,8 @@ DEMO_SCRITTURE = QUI / "demo-scritture"
 STATICI = {"/": ("index.html", "text/html"), "/index.html": ("index.html", "text/html"),
            "/app.js": ("app.js", "text/javascript"), "/stile.css": ("stile.css", "text/css")}
 MAX_CORPO = 64_000
+MAX_THREAD = 80     # thread Codex letti (escluse le revisioni guardian)
+MAX_GUARDIAN = 20   # revisioni guardian lette
 # avvisi
 BLOCCATA_ORE = 2
 ORFANA_GIORNI = 7
@@ -150,15 +152,22 @@ def codex():
         c = sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=2)
         c.row_factory = sqlite3.Row
         colonne = {r["name"] for r in c.execute("pragma table_info(threads)")}
-        # colonne facoltative: usate solo se esistono (da verificare con sonda.py)
-        genitore = next((x for x in ("parent_thread_id", "parent_id", "forked_from_id") if x in colonne), None)
+        tabelle = {r["name"] for r in c.execute("select name from sqlite_master where type='table'")}
+        # colonne facoltative, usate solo se esistono. Verificato con sonda.py (2026-11-05): in threads c'è
+        # attached_thread_parent_id; i legami madre-figlia stanno anche nella tabella thread_spawn_edges.
+        genitore = next((x for x in ("attached_thread_parent_id", "parent_thread_id", "parent_id") if x in colonne), None)
         inizio = next((x for x in ("created_at_ms", "created_at") if x in colonne), None)
         extra = (f", {genitore} as genitore" if genitore else "") + (f", {inizio} as inizio" if inizio else "")
-        righe = c.execute(
-            "select id, rollout_path, cwd, coalesce(name, title, '') as titolo, model, originator,"
-            f" thread_source, archived, updated_at_ms, tokens_used{extra} from threads"
-            " order by updated_at_ms desc limit 60"
-        ).fetchall()
+        base = ("select id, rollout_path, cwd, coalesce(name, title, '') as titolo, model, originator,"
+                f" thread_source, archived, updated_at_ms, tokens_used{extra} from threads")
+        guardia = "(coalesce(thread_source, '') = 'guardian_review' or coalesce(name, title, '') = 'Guardian review')"
+        # le revisioni guardian sono la maggior parte dei thread: hanno un limite a parte, così non escludono quelli veri
+        righe = c.execute(f"{base} where not {guardia} order by updated_at_ms desc limit {MAX_THREAD}").fetchall()
+        righe += c.execute(f"{base} where {guardia} order by updated_at_ms desc limit {MAX_GUARDIAN}").fetchall()
+        figli = {}
+        if "thread_spawn_edges" in tabelle:
+            figli = {r["child_thread_id"]: r["parent_thread_id"]
+                     for r in c.execute("select parent_thread_id, child_thread_id from thread_spawn_edges")}
         rc = c.execute(
             "select server_name, remote_control_enabled, updated_at from remote_control_enrollments"
         ).fetchall()
@@ -203,7 +212,7 @@ def codex():
             "inizio": ora_iso(ini) if isinstance(ini, (int, float)) else None,
             "ultimo_messaggio": ultimo,
             "id": r["id"],
-            "genitore": (r["genitore"] if genitore else None) or None,
+            "genitore": figli.get(r["id"]) or (r["genitore"] if genitore else None) or None,
             "riferimenti": rif,
             "_uuid": uuid,
             "interna": guardian,
@@ -263,7 +272,7 @@ def claude_locale():
     file += [(f, f.parent.parent.name) for f in radice.glob("*/*/subagents/*.jsonl")]
     for f, genitore in file:
         ts = f.stat().st_mtime
-        titolo = nome = ultimo_prompt = cwd = ""
+        titolo = nome = titolo_ai = ultimo_prompt = cwd = ""
         remoto = False
         testo = coda_testo(f, 256_000)
         for riga in testo.splitlines():
@@ -276,19 +285,22 @@ def claude_locale():
                 titolo = o.get("customTitle") or titolo
             elif t == "agent-name":
                 nome = o.get("agentName") or nome
+            elif t == "ai-title":  # titolo generato: nome del campo da confermare con sonda.py
+                titolo_ai = next((v for k, v in o.items() if k in ("aiTitle", "title", "customTitle") and isinstance(v, str)),
+                                 titolo_ai)
             elif t == "last-prompt":
                 ultimo_prompt = o.get("lastPrompt") or ultimo_prompt
             elif t == "bridge-session":
                 remoto = True
             if o.get("cwd"):
                 cwd = o["cwd"]
-        if not (titolo or nome):
+        if not (titolo or nome or titolo_ai):
             titolo = primo_messaggio_utente(f)
         rif, uuid = candidati_riferimenti(testo, f.stem)
         sessioni.append({
             "strumento": "Claude Code",
             "tipo": "subagente" if genitore else ("locale + remote control" if remoto else "locale"),
-            "titolo": (titolo or nome or f.stem)[:120],
+            "titolo": (titolo or nome or titolo_ai or f.stem)[:120],
             "cartella": cwd or f.parent.name,
             "modello": "",
             "stato": stato_da_eta(ts),

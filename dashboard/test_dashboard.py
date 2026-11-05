@@ -236,6 +236,54 @@ class TestFontiLocaliFinte(unittest.TestCase):
         d.HOME, d.DEMO, d.CONDIVISA, d.MACCHINA = self.salvati
         shutil.rmtree(self.tmp)
 
+    def crea_codex(self):
+        """state_5.sqlite finto con le colonne viste dalla sonda il 2026-11-05 (solo quelle usate)."""
+        import sqlite3
+        db = d.HOME / ".codex" / "state_5.sqlite"
+        db.parent.mkdir(parents=True, exist_ok=True)
+        c = sqlite3.connect(db)
+        c.execute("create table threads (id text, rollout_path text, cwd text, title text, name text, model text,"
+                  " originator text, thread_source text, archived integer, updated_at_ms integer, tokens_used integer,"
+                  " created_at_ms integer, attached_thread_parent_id text)")
+        c.execute("create table thread_spawn_edges (parent_thread_id text, child_thread_id text, status text)")
+        c.execute("create table remote_control_enrollments (server_name text, remote_control_enabled integer, updated_at integer)")
+        t = 1_700_000_000_000
+        righe = [(f"g{i}", "", "C:\\p", "Guardian review", None, "m", "Codex Desktop", "guardian_review", 0, t + 1000 + i, 0, t, None)
+                 for i in range(100)]
+        righe += [("madre", "", "C:\\p", "Lavoro vero", None, "m", "Codex Desktop", "user", 0, t + 10, 0, t, None),
+                  ("figlio", "", "C:\\p", "Sottoagente", None, "m", "Codex Desktop", "subagent", 0, t + 20, 0, t + 5, None),
+                  ("allegato", "", "C:\\p", "Allegato", None, "m", "Codex Desktop", "user", 0, t + 30, 0, t + 6, "madre")]
+        c.executemany("insert into threads values (?,?,?,?,?,?,?,?,?,?,?,?,?)", righe)
+        c.execute("insert into thread_spawn_edges values ('madre', 'figlio', 'x')")
+        c.commit()
+        c.close()
+
+    def test_codex_genitori_e_guardian_non_escludono_i_thread_veri(self):
+        self.crea_codex()
+        sessioni, nota = d.codex()
+        s = {x["id"]: x for x in sessioni}
+        self.assertTrue({"madre", "figlio", "allegato"} <= set(s), nota)  # non esclusi dalle 100 revisioni guardian
+        self.assertEqual(sum(1 for x in sessioni if x["interna"]), d.MAX_GUARDIAN)
+        self.assertEqual(s["figlio"]["genitore"], "madre")       # da thread_spawn_edges
+        self.assertEqual(s["allegato"]["genitore"], "madre")     # da attached_thread_parent_id
+        self.assertIsNone(s["madre"]["genitore"])
+        self.assertTrue(s["madre"]["inizio"].startswith("2023-11-14"))
+
+    def test_sonda_non_stampa_contenuti(self):
+        import contextlib
+        import io
+        import sonda
+        self.crea_codex()
+        sonda.HOME = d.HOME
+        uscita = io.StringIO()
+        with contextlib.redirect_stdout(uscita):
+            sonda.sonda_codex()
+        testo = uscita.getvalue()
+        self.assertIn("spawn_edges: figli presenti in threads: 1", testo)
+        self.assertIn("attached_thread_parent_id presente in threads: 1", testo)
+        for segreto in ("Lavoro vero", "Sottoagente", "C:\\\\p", "madre"):
+            self.assertNotIn(segreto, testo)
+
     def test_coda_scarta_solo_la_riga_tagliata(self):
         p = self.tmp / "f.jsonl"
         p.write_text('{"a": 1}\n{"b": 2}\n', encoding="utf-8")
