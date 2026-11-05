@@ -249,6 +249,10 @@ class TestFontiLocaliFinte(unittest.TestCase):
         c.execute("create table projects (id text, name text)")
         c.execute("insert into thread_sections values ('sez1', 'In corso', '')")
         c.execute("insert into projects values ('prg1', 'Preventivi')")
+        c.execute("insert into projects values ('prg2', 'Vivaio')")
+        c.execute("create table project_roots (project_id text, position integer, path text)")
+        c.execute("insert into project_roots values ('prg2', 0, 'C:\\Progetti')")
+        c.execute("insert into project_roots values ('prg2', 1, 'C:\\Progetti\\vivaio')")
         c.execute("create table thread_spawn_edges (parent_thread_id text, child_thread_id text, status text)")
         c.execute("create table remote_control_enrollments (server_name text, remote_control_enabled integer, updated_at integer)")
         t = 1_700_000_000_000
@@ -256,7 +260,9 @@ class TestFontiLocaliFinte(unittest.TestCase):
                   None, None) for i in range(100)]
         righe += [("madre", "", "C:\\p", "Lavoro vero", None, "m", "Codex Desktop", "user", 0, t + 10, 0, t, None, "sez1", "prg1"),
                   ("figlio", "", "C:\\p", "Sottoagente", None, "m", "Codex Desktop", "subagent", 0, t + 20, 0, t + 5, None, None, None),
-                  ("allegato", "", "C:\\p", "Allegato", None, "m", "Codex Desktop", "user", 0, t + 30, 0, t + 6, "madre", "sez1", None)]
+                  ("allegato", "", "C:\\p", "Allegato", None, "m", "Codex Desktop", "user", 0, t + 30, 0, t + 6, "madre", "sez1", None),
+                  ("dentro", "", "c:\\progetti\\VIVAIO\\schede", "Dentro", None, "m", "Codex Desktop", "user", 0, t + 40, 0, t, None, None, None),
+                  ("simile", "", "C:\\Progetti-vecchi", "Fuori", None, "m", "Codex Desktop", "user", 0, t + 41, 0, t, None, None, None)]
         c.executemany("insert into threads values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", righe)
         c.execute("insert into thread_spawn_edges values ('madre', 'figlio', 'x')")
         c.commit()
@@ -274,6 +280,9 @@ class TestFontiLocaliFinte(unittest.TestCase):
         self.assertTrue(s["madre"]["inizio"].startswith("2023-11-14"))
         self.assertEqual((s["madre"]["sezione_codex"], s["madre"]["progetto_codex"]), ("In corso", "Preventivi"))
         self.assertIsNone(s["figlio"]["sezione_codex"])
+        self.assertEqual(s["dentro"]["progetto_codex"], "Vivaio")   # dalla cartella del progetto (project_roots)
+        self.assertIsNone(s["simile"]["progetto_codex"])           # "Progetti-vecchi" non è dentro "Progetti"
+        self.assertIsNone(s["figlio"]["progetto_codex"])
         for x in sessioni:
             x["macchina"] = "PROVA"
         auto = {g["nome"]: g for g in col.gruppi_automatici([col.arricchisci(x) for x in sessioni])}

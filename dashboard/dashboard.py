@@ -144,6 +144,15 @@ def candidati_riferimenti(testo, proprio_id):
     return rif, uuid
 
 
+def progetto_da_cartella(cwd, radici):
+    """Id del progetto Codex la cui cartella contiene cwd (la più specifica), oppure None."""
+    n = col.normalizza_cartella(cwd)
+    for radice, pid in radici:
+        if radice and (n == radice or n.startswith(radice + "/")):
+            return pid
+    return None
+
+
 def codex():
     db = HOME / ".codex" / "state_5.sqlite"
     if not db.exists():
@@ -171,6 +180,13 @@ def codex():
         for tabella in ("thread_sections", "projects"):
             if tabella in tabelle:
                 nomi[tabella] = {r["id"]: r["name"] for r in c.execute(f"select id, name from {tabella}")}
+        # su dedalo threads.project_id è sempre vuoto (sonda, 2026-11-05): il progetto si ricava dalla cartella,
+        # confrontando la cartella del thread con le cartelle dei progetti (project_roots)
+        radici = []
+        if "project_roots" in tabelle and "projects" in tabelle:
+            radici = sorted(((col.normalizza_cartella(r["path"]), r["project_id"])
+                             for r in c.execute("select project_id, path from project_roots") if r["path"]),
+                            key=lambda x: len(x[0]), reverse=True)
         figli = {}
         if "thread_spawn_edges" in tabelle:
             figli = {r["child_thread_id"]: r["parent_thread_id"]
@@ -221,7 +237,7 @@ def codex():
             "id": r["id"],
             "genitore": figli.get(r["id"]) or (r["genitore"] if genitore else None) or None,
             "sezione_codex": nomi.get("thread_sections", {}).get(r["sezione"]) or None,
-            "progetto_codex": nomi.get("projects", {}).get(r["progetto"]) or None,
+            "progetto_codex": nomi.get("projects", {}).get(r["progetto"] or progetto_da_cartella(r["cwd"], radici)) or None,
             "riferimenti": rif,
             "_uuid": uuid,
             "interna": guardian,

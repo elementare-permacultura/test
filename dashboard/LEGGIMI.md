@@ -149,24 +149,22 @@ Così un sito web aperto nel browser non può scrivere nella dashboard.
 `.gitignore` esclude `dati/`, `claude_remoto.json` e `organizza-*.json` alla radice di `dashboard/`, oltre a `demo-scritture/`, `*.tmp` e le schermate delle prove.
 Non aggiungere al repository esportazioni, istantanee o registri reali: contengono titoli e id delle sessioni.
 
-## Formati verificati con `sonda.py` (2026-11-05, una macchina)
+## Formati verificati con `sonda.py` (2026-11-05, su dedalo; manas ancora da provare)
 
-Verificato: la sonda stampa solo nomi di campi e conteggi.
+La sonda stampa solo nomi di campi e conteggi.
 - **Claude:**
-  - i subagenti stanno in `~/.claude/projects/<progetto>/<sessione>/subagents/*.jsonl`; il genitore è la sessione della cartella;
-  - le righe hanno `timestamp`, `cwd`, `gitBranch`, `sessionId`, `isSidechain` e `agentId`.
+  - i subagenti stanno in `~/.claude/projects/<progetto>/<sessione>/subagents/agent-*.jsonl`, con `sessionId` uguale alla sessione madre;
+  - le righe hanno `timestamp`, `cwd`, `gitBranch`, `sessionId`, `isSidechain` e `agentId`;
+  - titoli: `custom-title.customTitle` (scelto da te), `agent-name.agentName`, `ai-title.aiTitle` (generato), in quest'ordine.
 - **Codex:**
-  - in `threads` non c'è `parent_thread_id`;
-  - i legami madre-figlia stanno nella tabella `thread_spawn_edges(parent_thread_id, child_thread_id, status)` e nella colonna `threads.attached_thread_parent_id`: la dashboard usa entrambi;
+  - i legami madre-figlia stanno nella tabella `thread_spawn_edges` (7 su 7 sono subagenti). Gli altri 44 subagenti non hanno la madre registrata e compaiono senza legame; ipotesi: sono più vecchi della tabella;
+  - `attached_thread_parent_id` esiste ma è sempre vuoto;
   - l'inizio viene da `created_at_ms`;
-  - sezioni e progetti: `threads.thread_section_id` → `thread_sections.name` e `threads.project_id` → `projects.name`;
-  - i valori di `thread_source` sono user, subagent, guardian_review, agent_created_thread, chatgpt_handoff, voice_chat e avatar_quick_chat.
-- **Revisioni guardian:** sono la maggior parte dei thread (380 su 520). Per questo hanno un limite a parte (`MAX_GUARDIAN` = 20) e non escludono i thread veri (`MAX_THREAD` = 80).
-
-Ancora da verificare con la sonda versione 2:
-- il nome del campo del titolo automatico nelle righe `ai-title` di Claude (oggi si provano `aiTitle` e `title`);
-- se `guardian_review_feedback.thread_id` collega una revisione guardian al thread revisionato;
-- quanti thread usano davvero `thread_section_id` e `project_id` (il collegamento tra id e nome è ricavato dai nomi delle colonne).
+  - le sezioni: `threads.thread_section_id` → `thread_sections.name` (16 thread);
+  - i progetti: `threads.project_id` è sempre vuoto. Il progetto si ricava dalla cartella del thread confrontandola con `project_roots.path`; vince la cartella di progetto più specifica;
+  - `git_origin_url` è sempre vuoto, quindi non si raggruppa per repository.
+- **Revisioni guardian:** sono la maggior parte dei thread (380 su 520), quindi hanno un limite a parte (`MAX_GUARDIAN` = 20) e non escludono i thread veri (`MAX_THREAD` = 80).
+  - Il legame tra una revisione e il thread revisionato non è nei dati: `guardian_review_feedback.thread_id` indica il thread che ha ricevuto un feedback, non la revisione.
 
 ## Limiti noti
 
