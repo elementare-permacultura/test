@@ -210,5 +210,60 @@ class TestDemoEServer(unittest.TestCase):
         self.assertEqual(self.richiesta("GET", "/api/esporta.md?gruppo=inesistente")[0], 404)
 
 
+class TestFontiLocaliFinte(unittest.TestCase):
+    """Lettura di ~/.claude su una home finta (formato ipotizzato, da confermare con sonda.py)."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.salvati = (d.HOME, d.DEMO, d.CONDIVISA, d.MACCHINA)
+        d.HOME, d.DEMO, d.CONDIVISA, d.MACCHINA = self.tmp / "home", False, self.tmp / "condivisa", "PROVA"
+        prog = d.HOME / ".claude" / "projects" / "C--progetti-vivaio"
+        (prog / "aaaaaaaa-1111-4111-8111-111111111111" / "subagents").mkdir(parents=True)
+        madre = prog / "aaaaaaaa-1111-4111-8111-111111111111.jsonl"
+        altra = prog / "bbbbbbbb-2222-4222-8222-222222222222.jsonl"
+        righe = [{"type": "user", "timestamp": "2026-11-04T08:00:00Z", "cwd": "C:\\progetti\\vivaio",
+                  "sessionId": "aaaaaaaa-1111-4111-8111-111111111111", "message": {"content": "Prima richiesta"}},
+                 {"type": "custom-title", "customTitle": "Schede vivaio"},
+                 {"type": "assistant", "message": {"content": "vedi bbbbbbbb-2222-4222-8222-222222222222, "
+                                                              "session_01XyZaBcDeF e github.com/o/r/pull/7"}}]
+        madre.write_text("\n".join(json.dumps(r) for r in righe) + "\n", encoding="utf-8")
+        altra.write_text(json.dumps({"type": "custom-title", "customTitle": "Altra"}) + "\n" * 2, encoding="utf-8")
+        (prog / "aaaaaaaa-1111-4111-8111-111111111111" / "subagents" / "agent-1.jsonl").write_text(
+            json.dumps({"type": "user", "cwd": "C:\\progetti\\vivaio", "message": {"content": "sotto-compito"}}) + "\n" * 2,
+            encoding="utf-8")
+
+    def tearDown(self):
+        d.HOME, d.DEMO, d.CONDIVISA, d.MACCHINA = self.salvati
+        shutil.rmtree(self.tmp)
+
+    def test_coda_scarta_solo_la_riga_tagliata(self):
+        p = self.tmp / "f.jsonl"
+        p.write_text('{"a": 1}\n{"b": 2}\n', encoding="utf-8")
+        self.assertEqual(d.coda_file(p), [{"a": 1}, {"b": 2}])             # file corto: tutte le righe
+        p.write_text('{"x": "' + "y" * 100 + '"}\n{"c": 3}\n', encoding="utf-8")
+        self.assertEqual(d.coda_file(p, byte=20), [{"c": 3}])              # riga tagliata scartata
+
+    def test_claude_locale_subagenti_citazioni_esportazione(self):
+        sessioni, _ = d.claude_locale()
+        d.prepara(sessioni)
+        s = {x["id"]: x for x in sessioni}
+        madre = s["aaaaaaaa-1111-4111-8111-111111111111"]
+        self.assertEqual(madre["titolo"], "Schede vivaio")
+        self.assertTrue(madre["inizio"].startswith("2026-11-04T08:00:00"))
+        self.assertIn("bbbbbbbb-2222-4222-8222-222222222222", madre["riferimenti"])  # UUID risolto: sessione nota
+        self.assertIn("session_01XyZaBcDeF", madre["riferimenti"])
+        self.assertIn("pr:o/r#7", madre["riferimenti"])
+        self.assertNotIn("aaaaaaaa-1111-4111-8111-111111111111", madre["riferimenti"])  # non cita sé stessa
+        self.assertEqual(s["agent-1"]["genitore"], "aaaaaaaa-1111-4111-8111-111111111111")
+        self.assertEqual(s["agent-1"]["tipo"], "subagente")
+        self.assertEqual(madre["progetto"], "vivaio")
+        dest, n = d.esporta()
+        dati = json.loads(dest.read_text(encoding="utf-8"))
+        self.assertEqual(n, 3)
+        for x in dati["sessioni"]:
+            self.assertEqual(set(x), set(d.CAMPI_ESPORTATI))   # niente cartella, messaggi o altro
+        self.assertNotIn("C:\\\\progetti", dest.read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main()

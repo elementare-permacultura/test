@@ -10,3 +10,5 @@ demo-scritture/
 # Registri di organizzazione veri, se la cartella condivisa è questa
 /organizza-*.json
 __pycache__/
+# Schermate della prova facoltativa
+prove/*.png

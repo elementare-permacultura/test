@@ -111,20 +111,23 @@ def eta_minuti(p, dati):
 
 
 def coda_testo(percorso, byte=64_000):
-    """Ultimi byte di un file come testo, senza leggerlo tutto (alcuni rollout superano i 5 MB)."""
+    """Ultimi byte di un file come testo, senza leggerlo tutto (alcuni rollout superano i 5 MB).
+    Se la lettura parte a metà file, la prima riga (tagliata) viene scartata."""
     try:
         with open(percorso, "rb") as f:
             f.seek(0, os.SEEK_END)
-            f.seek(max(0, f.tell() - byte))
-            return f.read().decode("utf-8", "replace")
+            inizio = max(0, f.tell() - byte)
+            f.seek(inizio)
+            testo = f.read().decode("utf-8", "replace")
     except OSError:
         return ""
+    return testo.split("\n", 1)[1] if inizio and "\n" in testo else testo
 
 
 def coda_file(percorso, byte=64_000):
     """Ultime righe JSON di un file."""
     out = []
-    for r in coda_testo(percorso, byte).splitlines()[1:]:
+    for r in coda_testo(percorso, byte).splitlines():
         try:
             out.append(json.loads(r))
         except ValueError:
@@ -171,7 +174,7 @@ def codex():
             testo = coda_testo(r["rollout_path"])
             rif, uuid = candidati_riferimenti(testo, r["id"])
             eventi = []
-            for riga in testo.splitlines()[1:]:
+            for riga in testo.splitlines():
                 try:
                     e = json.loads(riga)
                 except ValueError:
@@ -263,7 +266,7 @@ def claude_locale():
         titolo = nome = ultimo_prompt = cwd = ""
         remoto = False
         testo = coda_testo(f, 256_000)
-        for riga in testo.splitlines()[1:]:
+        for riga in testo.splitlines():
             try:
                 o = json.loads(riga)
             except ValueError:
@@ -526,7 +529,7 @@ def costruisci_grafo():
     dati.update({
         "macchina": MACCHINA, "demo": DEMO,
         "gruppi": lista_gruppi, "gruppi_auto": auto, "archi": archi,
-        "colonne": stato["colonne"], "regole": list(stato["regole"].values()),
+        "colonne": stato["colonne"], "regole": list(stato["regole"].values()), "decisioni": stato["decisioni"],
         "avvisi": calcola_avvisi(sessioni, in_attesa, avvisi),
         "organizza": {"note": note_org, "scrive_in": str(cartella_scritture() / f"{org.PREFISSO}{MACCHINA}.json")},
     })
