@@ -14,7 +14,9 @@
    "ultimo_messaggio": "Sto aggiornando i test del parser",
    "cartella": "C:\\PROGETTI\\esempio-preventivi",
    "genitore": null,
-   "riferimenti": []
+   "riferimenti": [],
+   "sezione_codex": "In corso",
+   "progetto_codex": "Preventivi"
   },
   {
    "strumento": "Codex",
@@ -44,7 +46,9 @@
    "ultimo_messaggio": "",
    "cartella": "C:\\Onedrive\\_ELE\\esempio-mappe",
    "genitore": null,
-   "riferimenti": []
+   "riferimenti": [],
+   "sezione_codex": "Da rivedere",
+   "progetto_codex": "Mappe"
   },
   {
    "strumento": "Codex",
@@ -59,7 +63,8 @@
    "ultimo_messaggio": "Esportazione completata",
    "cartella": "C:\\PROGETTI\\esempio-csv",
    "genitore": null,
-   "riferimenti": []
+   "riferimenti": [],
+   "sezione_codex": "Da rivedere"
   },
   {
    "strumento": "Claude Code",

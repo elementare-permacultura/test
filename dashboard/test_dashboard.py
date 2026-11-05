@@ -244,16 +244,20 @@ class TestFontiLocaliFinte(unittest.TestCase):
         c = sqlite3.connect(db)
         c.execute("create table threads (id text, rollout_path text, cwd text, title text, name text, model text,"
                   " originator text, thread_source text, archived integer, updated_at_ms integer, tokens_used integer,"
-                  " created_at_ms integer, attached_thread_parent_id text)")
+                  " created_at_ms integer, attached_thread_parent_id text, thread_section_id text, project_id text)")
+        c.execute("create table thread_sections (id text, name text, appearance text)")
+        c.execute("create table projects (id text, name text)")
+        c.execute("insert into thread_sections values ('sez1', 'In corso', '')")
+        c.execute("insert into projects values ('prg1', 'Preventivi')")
         c.execute("create table thread_spawn_edges (parent_thread_id text, child_thread_id text, status text)")
         c.execute("create table remote_control_enrollments (server_name text, remote_control_enabled integer, updated_at integer)")
         t = 1_700_000_000_000
-        righe = [(f"g{i}", "", "C:\\p", "Guardian review", None, "m", "Codex Desktop", "guardian_review", 0, t + 1000 + i, 0, t, None)
-                 for i in range(100)]
-        righe += [("madre", "", "C:\\p", "Lavoro vero", None, "m", "Codex Desktop", "user", 0, t + 10, 0, t, None),
-                  ("figlio", "", "C:\\p", "Sottoagente", None, "m", "Codex Desktop", "subagent", 0, t + 20, 0, t + 5, None),
-                  ("allegato", "", "C:\\p", "Allegato", None, "m", "Codex Desktop", "user", 0, t + 30, 0, t + 6, "madre")]
-        c.executemany("insert into threads values (?,?,?,?,?,?,?,?,?,?,?,?,?)", righe)
+        righe = [(f"g{i}", "", "C:\\p", "Guardian review", None, "m", "Codex Desktop", "guardian_review", 0, t + 1000 + i, 0, t, None,
+                  None, None) for i in range(100)]
+        righe += [("madre", "", "C:\\p", "Lavoro vero", None, "m", "Codex Desktop", "user", 0, t + 10, 0, t, None, "sez1", "prg1"),
+                  ("figlio", "", "C:\\p", "Sottoagente", None, "m", "Codex Desktop", "subagent", 0, t + 20, 0, t + 5, None, None, None),
+                  ("allegato", "", "C:\\p", "Allegato", None, "m", "Codex Desktop", "user", 0, t + 30, 0, t + 6, "madre", "sez1", None)]
+        c.executemany("insert into threads values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", righe)
         c.execute("insert into thread_spawn_edges values ('madre', 'figlio', 'x')")
         c.commit()
         c.close()
@@ -268,6 +272,13 @@ class TestFontiLocaliFinte(unittest.TestCase):
         self.assertEqual(s["allegato"]["genitore"], "madre")     # da attached_thread_parent_id
         self.assertIsNone(s["madre"]["genitore"])
         self.assertTrue(s["madre"]["inizio"].startswith("2023-11-14"))
+        self.assertEqual((s["madre"]["sezione_codex"], s["madre"]["progetto_codex"]), ("In corso", "Preventivi"))
+        self.assertIsNone(s["figlio"]["sezione_codex"])
+        for x in sessioni:
+            x["macchina"] = "PROVA"
+        auto = {g["nome"]: g for g in col.gruppi_automatici([col.arricchisci(x) for x in sessioni])}
+        self.assertEqual(auto["🗂 In corso"]["membri"], ["allegato", "madre"])
+        self.assertEqual(auto["🧭 Preventivi"]["nome_proposto"], "Preventivi")
 
     def test_sonda_non_stampa_contenuti(self):
         import contextlib

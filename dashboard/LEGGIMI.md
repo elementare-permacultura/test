@@ -17,7 +17,7 @@ Serve solo Python 3.12 o successivo (libreria standard, nessuna dipendenza). Il 
 - **Esportazione per le altre macchine:** `python dashboard.py --esporta [--ogni 60]`.
 - **Cartella condivisa:** variabile `DASHBOARD_CONDIVISA`, altrimenti `dati\` accanto allo script.
 - **Sonda dei formati:** `python sonda.py`. Stampa solo nomi di campi e conteggi, mai contenuti. Serve a confermare le ipotesi elencate sotto.
-- **Test:** `cd dashboard` poi `python -m unittest -v` (15 test, solo dati finti).
+- **Test:** `cd dashboard` poi `python -m unittest -v` (17 test, solo dati finti).
 
 ## Le 8 viste
 
@@ -48,6 +48,11 @@ Comuni a tutte le viste:
 | stessa cartella | stessa impronta di cartella; archi solo tra sessioni consecutive, più un gruppo automatico per cartella | probabile |
 | titoli simili | somiglianza dei titoli ≥ 50%, oppure ≥ 25% nello stesso progetto entro 2 ore | da confermare |
 
+- **Gruppi proposti** (vista Proposte, "Crea gruppo" li trasforma in gruppi tuoi):
+  - una cartella con almeno due sessioni;
+  - ogni **sezione** e ogni **progetto** che hai già creato in Codex. Le sezioni con lo stesso nome su macchine diverse diventano un'unica proposta.
+
+  Le sessioni che hai già messo a mano in un gruppo non vengono spostate.
 - **Collegamenti manuali:** "prerequisito di", "continua in", "duplicato di", "correlata a".
 - **Decisioni sulle proposte:**
   - una proposta rifiutata non ricompare;
@@ -104,7 +109,7 @@ python dashboard.py --demo
 | `esempi/organizza-MANAS.json`, `esempi/organizza-DEDALO.json` | gruppi a 3 livelli, note, regola, rifiuto; un conflitto di nome risolto dalla modifica più recente |
 | `esempi/organizza-MANAS-Dedalo.json` | copia di conflitto del registro: ignorata |
 
-Prova facoltativa dell'interfaccia (60 controlli, richiede Node e Playwright): `prove/interfaccia.js`, istruzioni in testa al file.
+Prova facoltativa dell'interfaccia (61 controlli, richiede Node e Playwright): `prove/interfaccia.js`, istruzioni in testa al file.
 
 ## Formati e API
 
@@ -112,7 +117,7 @@ Prova facoltativa dell'interfaccia (60 controlli, richiede Node e Playwright): `
 
 `GET /api/grafo` aggiunge `macchina`, `demo`, `gruppi`, `gruppi_auto`, `archi`, `colonne`, `regole`, `decisioni`, `avvisi` e `organizza`.
 Ogni sessione ha i campi originali (`strumento`, `tipo`, `titolo`, `modello`, `stato`, `ultima_attivita`, `id`, `macchina`, `interna`, `ultimo_messaggio`, `cartella`) più questi:
-- `inizio`, `genitore`, `riferimenti`, `cartella_chiave`, `progetto`;
+- `inizio`, `genitore`, `riferimenti`, `cartella_chiave`, `progetto`, `sezione_codex`, `progetto_codex`;
 - se la stessa sessione compare su più macchine: `anche_su`, `attiva_su`;
 - dall'organizzazione: `gruppo`, `gruppo_fonte` (manuale/regola), `gruppo_percorso` e gli attributi (`nota`, `prossima_azione`, `etichette`, `priorita`, `colonna`, `nascosta`).
 
@@ -128,13 +133,14 @@ Così un sito web aperto nel browser non può scrivere nella dashboard.
 
 ```json
 {"macchina": "MANAS", "generata": "ISO", "sessioni": [{"strumento", "tipo", "titolo", "modello", "stato", "ultima_attivita", "id",
-  "inizio", "genitore", "riferimenti", "cartella_chiave", "progetto"}]}
+  "inizio", "genitore", "riferimenti", "cartella_chiave", "progetto", "sezione_codex", "progetto_codex"}]}
 ```
 
 - Niente messaggi né percorsi completi.
 - `cartella_chiave` è un'impronta del percorso (sha256, 12 caratteri): permette di riconoscere la stessa cartella su macchine diverse senza mostrarla.
 - `progetto` è il nome dell'ultima cartella.
 - `riferimenti` contiene solo id di sessione e pull request citati.
+- `sezione_codex` e `progetto_codex` sono i nomi che hai dato a sezioni e progetti in Codex.
 - Ultimi 30 giorni, senza revisioni guardian. I file del formato precedente (7 campi) continuano a funzionare.
 - Un file viene ignorato se `macchina` non coincide con il nome del file oppure se è la macchina stessa. Se è più vecchio di 5 minuti viene segnalato.
 
@@ -153,13 +159,14 @@ Verificato: la sonda stampa solo nomi di campi e conteggi.
   - in `threads` non c'è `parent_thread_id`;
   - i legami madre-figlia stanno nella tabella `thread_spawn_edges(parent_thread_id, child_thread_id, status)` e nella colonna `threads.attached_thread_parent_id`: la dashboard usa entrambi;
   - l'inizio viene da `created_at_ms`;
+  - sezioni e progetti: `threads.thread_section_id` → `thread_sections.name` e `threads.project_id` → `projects.name`;
   - i valori di `thread_source` sono user, subagent, guardian_review, agent_created_thread, chatgpt_handoff, voice_chat e avatar_quick_chat.
 - **Revisioni guardian:** sono la maggior parte dei thread (380 su 520). Per questo hanno un limite a parte (`MAX_GUARDIAN` = 20) e non escludono i thread veri (`MAX_THREAD` = 80).
 
 Ancora da verificare con la sonda versione 2:
 - il nome del campo del titolo automatico nelle righe `ai-title` di Claude (oggi si provano `aiTitle` e `title`);
 - se `guardian_review_feedback.thread_id` collega una revisione guardian al thread revisionato;
-- quanti thread usano `thread_section_id`, `project_id`, `git_origin_url` e `git_branch`.
+- quanti thread usano davvero `thread_section_id` e `project_id` (il collegamento tra id e nome è ricavato dai nomi delle colonne).
 
 ## Limiti noti
 

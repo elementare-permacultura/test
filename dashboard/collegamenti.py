@@ -184,20 +184,45 @@ def archi_automatici(sessioni, soglia=SOGLIA_TITOLI, soglia_vicine=SOGLIA_TITOLI
     return list(archi.values())
 
 
+ORIGINI_GRUPPO = {
+    # campo della sessione: (prefisso dell'id, simbolo, descrizione, minimo di sessioni)
+    "sezione_codex": ("sez", "🗂", "nella sezione di Codex", 1),
+    "progetto_codex": ("prg", "🧭", "nel progetto di Codex", 1),
+}
+
+
+def _chiave_nome(prefisso, nome):
+    return hashlib.sha256(f"{prefisso}:{nome.strip().lower()}".encode("utf-8")).hexdigest()[:12]
+
+
 def gruppi_automatici(sessioni):
-    """Un gruppo automatico per ogni cartella/repository con almeno due sessioni."""
+    """Gruppi proposti: cartelle con almeno due sessioni, sezioni e progetti già scelti dall'utente in Codex."""
+    out = []
     per_cartella = {}
     for s in sessioni:
         if s.get("cartella_chiave") and not s.get("interna"):
             per_cartella.setdefault(s["cartella_chiave"], []).append(s)
-    out = []
     for chiave, gruppo in sorted(per_cartella.items()):
         if len(gruppo) < 2:
             continue
         nome = next((s.get("progetto") for s in gruppo if s.get("progetto")), chiave)
         macchine = sorted({s.get("macchina") or "remoto" for s in gruppo})
-        out.append({"id": f"auto:{chiave}", "nome": f"📁 {nome}", "membri": sorted(s["id"] for s in gruppo),
+        out.append({"id": f"auto:{chiave}", "nome": f"📁 {nome}", "nome_proposto": nome, "origine": "cartella",
+                    "membri": sorted(s["id"] for s in gruppo),
                     "prova": f"{len(gruppo)} sessioni nella stessa cartella ({', '.join(macchine)})"})
+    for campo, (prefisso, simbolo, descrizione, minimo) in ORIGINI_GRUPPO.items():
+        per_nome = {}
+        for s in sessioni:
+            nome = (s.get(campo) or "").strip()
+            if nome and not s.get("interna"):
+                per_nome.setdefault(nome, []).append(s)
+        for nome, gruppo in sorted(per_nome.items()):
+            if len(gruppo) < minimo:
+                continue
+            macchine = sorted({s.get("macchina") or "remoto" for s in gruppo})
+            out.append({"id": f"auto:{prefisso}:{_chiave_nome(prefisso, nome)}", "nome": f"{simbolo} {nome}",
+                        "nome_proposto": nome, "origine": campo, "membri": sorted(s["id"] for s in gruppo),
+                        "prova": f"{len(gruppo)} thread {descrizione} “{nome}” ({', '.join(macchine)})"})
     return out
 
 

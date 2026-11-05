@@ -39,7 +39,7 @@ VECCHIA_SE_MINUTI = 5  # un'esportazione più vecchia di così viene segnalata
 # cartella_chiave è un'impronta del percorso (serve a riconoscere la stessa cartella su macchine diverse),
 # progetto è il nome dell'ultima cartella; riferimenti contiene solo id di sessione e pull request citati.
 CAMPI_ESPORTATI = ("strumento", "tipo", "titolo", "modello", "stato", "ultima_attivita", "id",
-                   "inizio", "genitore", "riferimenti", "cartella_chiave", "progetto")
+                   "inizio", "genitore", "riferimenti", "cartella_chiave", "progetto", "sezione_codex", "progetto_codex")
 # modalità dimostrativa (--demo): tutte le fonti vengono da esempi/, con orari spostati su adesso
 ESEMPI = QUI / "esempi"
 DEMO = False
@@ -158,12 +158,19 @@ def codex():
         genitore = next((x for x in ("attached_thread_parent_id", "parent_thread_id", "parent_id") if x in colonne), None)
         inizio = next((x for x in ("created_at_ms", "created_at") if x in colonne), None)
         extra = (f", {genitore} as genitore" if genitore else "") + (f", {inizio} as inizio" if inizio else "")
+        # organizzazione già fatta in Codex: sezioni e progetti (verificati con sonda.py il 2026-11-05)
+        for colonna, tabella, alias in (("thread_section_id", "thread_sections", "sezione"), ("project_id", "projects", "progetto")):
+            extra += f", {colonna} as {alias}" if colonna in colonne and tabella in tabelle else f", null as {alias}"
         base = ("select id, rollout_path, cwd, coalesce(name, title, '') as titolo, model, originator,"
                 f" thread_source, archived, updated_at_ms, tokens_used{extra} from threads")
         guardia = "(coalesce(thread_source, '') = 'guardian_review' or coalesce(name, title, '') = 'Guardian review')"
         # le revisioni guardian sono la maggior parte dei thread: hanno un limite a parte, così non escludono quelli veri
         righe = c.execute(f"{base} where not {guardia} order by updated_at_ms desc limit {MAX_THREAD}").fetchall()
         righe += c.execute(f"{base} where {guardia} order by updated_at_ms desc limit {MAX_GUARDIAN}").fetchall()
+        nomi = {}
+        for tabella in ("thread_sections", "projects"):
+            if tabella in tabelle:
+                nomi[tabella] = {r["id"]: r["name"] for r in c.execute(f"select id, name from {tabella}")}
         figli = {}
         if "thread_spawn_edges" in tabelle:
             figli = {r["child_thread_id"]: r["parent_thread_id"]
@@ -213,6 +220,8 @@ def codex():
             "ultimo_messaggio": ultimo,
             "id": r["id"],
             "genitore": figli.get(r["id"]) or (r["genitore"] if genitore else None) or None,
+            "sezione_codex": nomi.get("thread_sections", {}).get(r["sezione"]) or None,
+            "progetto_codex": nomi.get("projects", {}).get(r["progetto"]) or None,
             "riferimenti": rif,
             "_uuid": uuid,
             "interna": guardian,
@@ -389,6 +398,8 @@ def prepara(sessioni):
         s["riferimenti"] = list(dict.fromkeys(s["riferimenti"] + extra))[:col.MAX_RIFERIMENTI]
         s.setdefault("genitore", None)
         s.setdefault("inizio", None)
+        s.setdefault("sezione_codex", None)
+        s.setdefault("progetto_codex", None)
     return sessioni
 
 

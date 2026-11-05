@@ -102,7 +102,7 @@ function visibili() {
   return D.sessioni.filter(s => (U.interne || !s.interna) && (U.ferme || !PASSIVI.includes(s.stato))
     && (U.nascoste || !s.nascosta) && (!U.macchina || (s.macchina || "remoto") === U.macchina)
     && (U.gruppo !== "_nessuno" || !s.gruppo) && (!nelGruppo || nelGruppo.has(s.gruppo))
-    && (!q || [s.titolo, s.progetto, s.id, s.nota, s.prossima_azione, s.gruppo_percorso, s.strumento, ...(s.etichette || [])]
+    && (!q || [s.titolo, s.progetto, s.sezione_codex, s.progetto_codex, s.id, s.nota, s.prossima_azione, s.gruppo_percorso, s.strumento, ...(s.etichette || [])]
       .some(v => String(v || "").toLowerCase().includes(q))));
 }
 
@@ -442,7 +442,7 @@ function vistaProposte(el) {
   const auto = D.gruppi_auto.filter(g => !g.decisione);
   const archi = D.archi.filter(daConfermare);
   const prese = Object.entries(D.decisioni || {});
-  el.innerHTML = `<h2>Gruppi automatici per cartella (${auto.length})</h2>`
+  el.innerHTML = `<h2>Gruppi proposti (${auto.length})</h2><p class="sub">Da cartelle in comune e dalle sezioni e dai progetti che hai già creato in Codex.</p>`
     + (auto.map(g => `<div class="scheda"><div class="riga"><div><b>${esc(g.nome)}</b> <span class="prova">${esc(g.prova)}</span>
         <div class="msg">${g.membri.map(titolo).join(" · ")}</div></div>
         <div><button class="primario" data-azione="crea-auto" data-gruppo="${esc(g.id)}">Crea gruppo</button>
@@ -565,7 +565,9 @@ function disegnaDettaglio() {
   pannello.innerHTML = `<button class="chiudi" data-azione="chiudi" aria-label="Chiudi">✕</button>
     <h2>${esc(s.titolo || s.id)}</h2><div>${chip(s)} <b>${esc(s.strumento)}</b>${macchinaTag(s)}</div>
     <dl class="campi"><dt>Tipo</dt><dd>${esc(s.tipo)}${s.modello ? " · " + esc(s.modello) : ""}</dd>
-      <dt>Progetto</dt><dd>${esc(s.progetto || "—")}</dd><dt>Cartella</dt><dd class="cart">${esc(s.cartella || "—")}</dd>
+      <dt>Progetto</dt><dd>${esc(s.progetto || "—")}</dd>
+      ${s.sezione_codex ? `<dt>Sezione Codex</dt><dd>${esc(s.sezione_codex)}</dd>` : ""}
+      ${s.progetto_codex ? `<dt>Progetto Codex</dt><dd>${esc(s.progetto_codex)}</dd>` : ""}<dt>Cartella</dt><dd class="cart">${esc(s.cartella || "—")}</dd>
       <dt>Inizio</dt><dd>${s.inizio ? new Date(s.inizio).toLocaleString("it-IT") : "—"}</dd><dt>Ultima attività</dt><dd>${quando(s.ultima_attivita)}</dd>
       <dt>Id</dt><dd class="cart">${esc(s.id)}${apri}</dd>
       ${s.ultimo_messaggio ? `<dt>Ultimo messaggio</dt><dd>${esc(s.ultimo_messaggio)}</dd>` : ""}
@@ -624,7 +626,7 @@ document.addEventListener("click", e => {
     case "crea-auto": {
       const g = D.gruppi_auto.find(x => x.id === t.dataset.gruppo), nuovo = nuovoId("g-");
       const liberi = g.membri.filter(m => !PER[m]?.gruppo || PER[m].gruppo_fonte !== "manuale");
-      invia([{ op: "crea_gruppo", id: nuovo, nome: g.nome.replace(/^📁\s*/, "") }, ...liberi.map(m => ({ op: "aggiungi", sessione: m, gruppo: nuovo })),
+      invia([{ op: "crea_gruppo", id: nuovo, nome: g.nome_proposto || g.nome }, ...liberi.map(m => ({ op: "aggiungi", sessione: m, gruppo: nuovo })),
         { op: "conferma", arco: g.id }], `Gruppo creato con ${liberi.length} sessioni`);
       break;
     }

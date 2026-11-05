@@ -117,6 +117,11 @@ const verifica = (cond, testo) => { if (!cond) throw new Error('FALLITO: ' + tes
   const nuovo = g.gruppi.find(x => x.nome === 'esempio-fornitori');
   verifica(nuovo && auto.membri.every(m => g.sessioni.find(s => s.id === m).gruppo === nuovo.id), 'gruppo automatico trasformato in gruppo manuale');
   verifica(g.gruppi_auto.find(x => x.id === auto.id).decisione === 'conferma', 'il gruppo automatico non è più proposto');
+  const sez = g.gruppi_auto.find(x => !x.decisione && x.origine === 'sezione_codex' && x.nome_proposto === 'In corso');
+  await Promise.all([attendiCarica(), p.click(`[data-azione="crea-auto"][data-gruppo="${sez.id}"]`)]);
+  g = await grafo();
+  const gsez = g.gruppi.find(x => x.nome === 'In corso');
+  verifica(gsez && g.sessioni.find(s => s.id === 'demo-manas-0002').gruppo === gsez.id && g.sessioni.find(s => s.id === 'demo-dedalo-0002').gruppo !== gsez.id, 'sezione di Codex trasformata in gruppo; chi ha già un gruppo manuale resta nel suo');
   await p.fill('#r-testo', 'catalogo');
   await p.selectOption('#r-campo', 'titolo');
   await p.selectOption('#r-gruppo', nuovo.id);
